@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<div class="modal-dialog" role="document">
+	<div class="modal-content">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal"
+				aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+			<h4 class="modal-title" id="myModalLabel">
+				Busqueda para: <strong th:text="${palabraClave}"></strong>
+			</h4>
+		</div>
+		<div class="modal-body">
+			<ul class="list-group">
+				<li class="list-group-item fileD" th:each="documento : ${listaDocs}"
+					th:id="${documento.idArchivo}" th:attr="data-id=${documento.idArchivo}">
+							<span th:switch="${documento.extensionDoc}"> 
+							  <i th:case="'pdf'" class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i>
+							  <i th:case="'xlsx'" class="fa fa-file-excel-o fa-3x" aria-hidden="true"></i>
+							  <i th:case="'xls'" class="fa fa-file-excel-o fa-3x" aria-hidden="true"></i>
+							  <i th:case="'xlsm'" class="fa fa-file-excel-o fa-3x" aria-hidden="true"></i>
+							  <i th:case="'docx'" class="fa fa-file-word-o fa-3x" aria-hidden="true"></i>
+							  <i th:case="'doc'" class="fa fa-file-word-o fa-3x" aria-hidden="true"></i>
+							  <i th:case="'docm'" class="fa fa-file-word-o fa-3x" aria-hidden="true"></i>
+							  <i th:case="'png'" class="fa fa-file-image-o fa-3x" aria-hidden="true"></i>
+							  <i th:case="*" class="fa fa-file-o fa-3x"></i> 
+							</span>
+					<div class="file-specs m-l-25">
+						<p class="m-0" th:text="${documento.nombreDoc}"></p>
+						<p class="m-0"
+							th:text="${#calendars.format(documento.fechaCreacion,'dd/MM/yy')}">Fecha</p>
+						<!-- <p class="m-0" th:text="${documento.}">Version</p> -->
+					</div></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<script>
+	//<![CDATA[
+	$(".fileD").click(function() {
+		console.log("ATT: " + $(this).attr("data-id"));
+		var idArch = $(this).attr("data-id");
+
+		if (idArch != null) {
+			location.href = '/downloadFile?idArchivo=' + idArch;
+		}
+	});
+	// ]]>
+</script>
+
+</html>

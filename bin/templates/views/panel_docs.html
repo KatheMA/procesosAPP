@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<div class="panel panel-default">
+	<!-- Default panel contents -->
+	<div class="panel-heading">
+		<ol class="breadcrumb m-0">
+			<li th:text="${padre}"></li>
+			<li th:text="${hijo}"></li>
+		</ol>
+		<i th:if="${usuarioLogged} != null" class="fa fa-cloud-upload fa-2x button-upload" aria-hidden="true"></i>
+	</div>
+	<div class="panel-body" th:attr="data-panel=${categoria}">
+		<!-- Nav tabs -->
+		<ul class="nav nav-tabs nav-justified tiposDocs" role="tablist">
+			<li role="presentation" th:each="proceso : ${listaProcesos}"><a
+				th:href="@{'#' + ${proceso.key}}" aria-controls="home" role="tab"
+				data-toggle="tab" th:text="${proceso.key}"></a></li>
+		</ul>
+
+		<!-- Tab panes -->
+		<div class="tab-content">
+			<div role="tabpanel" class="tab-pane"
+				th:each="proceso : ${listaProcesos}" th:id="${proceso.key}">
+				<ul class="list-group sub-lista">
+					<li class="list-group-item button-upload" style="display: none;"><button
+							type="button" class="btn">
+							Subir archivos<i class="material-icons icon-little m-l-25">cloud_upload</i>
+						</button></li>
+					<li th:each="docs : ${proceso.value}" class="list-group-item"><span
+						th:switch="${docs.extensionDoc}"> <i th:case="'pdf'"
+							class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i> <i
+							th:case="'xlsx'" class="fa fa-file-excel-o fa-3x"
+							aria-hidden="true"></i> <i th:case="'xls'"
+							class="fa fa-file-excel-o fa-3x" aria-hidden="true"></i> <i
+							th:case="'xlsm'" class="fa fa-file-excel-o fa-3x"
+							aria-hidden="true"></i> <i th:case="'docx'"
+							class="fa fa-file-word-o fa-3x" aria-hidden="true"></i> <i
+							th:case="'doc'" class="fa fa-file-word-o fa-3x"
+							aria-hidden="true"></i> <i th:case="'docm'"
+							class="fa fa-file-word-o fa-3x" aria-hidden="true"></i> <i
+							th:case="'png'" class="fa fa-file-image-o fa-3x"
+							aria-hidden="true"></i> <i th:case="*" class="fa fa-file-o fa-3x"></i>
+					</span>
+						<div class="file-specs m-l-25 flex2 fileP" style="margin:0 25px;" th:attr="data-id=${docs.idArchivo}">
+							<p class="m-0" th:text="${docs.nombreDoc}">Titulo</p>
+							<p class="m-0"
+								th:text="${#calendars.format(docs.fechaCreacion,'dd/MM/yy')}">Fecha</p>
+							<!-- <p class="m-0" th:text="${docs.}">Version</p> -->
+						</div>
+							<span th:if="${usuarioLogged} != null" class="delete"><i class="fa fa-trash fa-2x"	></i></span>
+						
+						</li>
+				</ul>
+				<div class="uploadPanel" th:attr="data-proceso=${proceso.key}">
+					<div class="watermark">
+						<i class="fa fa-cloud-upload" aria-hidden="true"></i>
+					</div>
+					<button type="button" class="btn cancelarUpload">Cancelar</button>
+
+					<div class="form-group">
+<!-- 					<form id="filedrag" class="uploadText" action="/uploadFile" -->
+<!-- 						method="POST" enctype="multipart/form-data"> -->
+<!-- 						<input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" -->
+<!-- 							value="100000000000" /> -->
+						
+<!-- 						<div id="messages"> -->
+<!-- 							<p></p> -->
+<!-- 						</div> -->
+<!-- 					</form> -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="deleteFile" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <p class="lead">Se ha eliminado el archivo</p>
+                    <p id="archivoE"></p>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+</div>
+    
+<script type="text/javascript">
+	// <![CDATA[
+	$(".uploadPanel").hide();
+
+	//////
+	$(".button-upload").click(function() {
+		 $(this).parent().next().find(".tab-pane.active").find(".list-group").hide();
+         $(this).parent().next().find(".tab-pane.active").find(".uploadPanel").show();
+		var idPanel = $(this).parent().next().find(".tab-pane.active").find(".uploadPanel").attr('data-proceso');
+		console.log("idPanel: "+idPanel);
+		if (window.File && window.FileList && window.FileReader) {
+			
+			$(".form-group:visible").append("<form id='filedrag' class='uploadText' action='/uploadFile'"+
+					"method='POST' enctype='multipart/form-data'><input type='hidden' id='MAX_FILE_SIZE' name='MAX_FILE_SIZE' value='100000000000' />"+
+					"<div id='filedrag'>Arrastra los archivos que desees subir dentro del área azul</div><div id='messages'><p></p></div></form>");	
+			Init();
+			
+		}
+		
+	});
+
+	$(".cancelarUpload").click(function() {
+		$(".form-group:visible").empty();
+		$(this).parent().hide();
+		$(this).parent().siblings("ul").show();
+	});
+	
+	$(".tiposDocs li").click(function() {
+		$(".cancelarUpload").click();
+	});
+
+	//USING FILE API TO UPLOAD FILES
+	// call initialization file
+	
+	
+	//
+	// initialize
+	function Init() {
+		
+		
+		
+		//var fileselect = document.getElementById("fileselect");
+		var filedrag = document.getElementById("filedrag");
+		//var submitbutton = document.getElementById("submitbutton");
+
+		// file select
+		//fileselect.addEventListener("change", FileSelectHandler, false);
+
+		// is XHR2 available?
+		var xhr = new XMLHttpRequest();
+		if (xhr.upload) {
+
+			// file drop
+			filedrag.addEventListener("dragover", FileDragHover, false);
+			filedrag.addEventListener("dragleave", FileDragHover, false);
+			filedrag.addEventListener("drop", FileSelectHandler, false);
+			filedrag.style.display = "block";
+
+			// remove submit button
+			//submitbutton.style.display = "none";
+		}
+
+	}
+
+	// file drag hover
+	function FileDragHover(e) {
+		e.stopPropagation();
+		e.preventDefault();
+		e.target.className = (e.type == "dragover" ? "hover" : "");
+	}
+
+	var files;
+	var filesTotal = [];
+
+	// file selection
+	function FileSelectHandler(e) {
+		console.dir(e);
+		// cancel event and hover styling
+		FileDragHover(e);
+
+		// fetch FileList object
+		files = e.target.files || e.dataTransfer.files;
+		
+		// process all File objects
+		
+		console.log("FILES 00000");
+		console.dir(files[0]);
+		for (var i = 0, f; f = files[i]; i++) {
+			ParseFile(f);
+			//filesTotal.push(f);
+			UploadFile(f);
+		}
+	}
+
+	function UploadFile(file) {
+		var reader = new FileReader();
+		
+		reader.readAsBinaryString(file);
+		
+		reader.onloadend = function () {
+		    console.log(reader.result);
+		    
+		    var fd = new FormData();
+		    
+		    var idCategoria = $(".panel-body").attr("data-panel");
+		    var tipoDoc = $(".uploadPanel:visible").attr("data-proceso");
+		    
+		    console.log("idCat: "+idCategoria+" | tipoDoc: "+tipoDoc);
+		    
+		    fd.append('file', file);
+		    fd.append('idCategoria',idCategoria);
+		    fd.append('tipoDoc',tipoDoc);
+		    
+		    $.ajax({
+				  url: "/uploadFile",
+				  type: "POST",
+				  data: fd,
+				  dataType: 'text',
+				  processData: false,  // tell jQuery not to process the data
+				  contentType: false   // tell jQuery not to set contentType
+			});
+		    
+		  }
+	}
+	
+	
+	/*submitbutton.addEventListener("click", function (e) {
+        e.preventDefault();
+        console.log("I will load now all the files");
+        console.dir(filesTotal);
+        for (var i = 0, f; f = files[i]; i++) {
+            UploadFile(f);
+        }
+    });*/
+	
+	 function ParseFile(file) {
+         //submitbutton.style.display = "inline";
+         var reader = new FileReader();
+         Output(
+             "<p><i class='fa fa-file-text' aria-hidden='true'></i>  " + file.name +
+             "<span style='display:none;'>" + file.type +
+             " | " + file.size +
+             "</span></p>"
+         );
+         reader.readAsDataURL(file);
+         console.info(reader.result);
+     }
+
+	// output information
+	function Output(msg) {
+		var m = document.getElementById("messages");
+		m.innerHTML = msg + m.innerHTML;
+	}
+	
+	$(".fileP").click(function() {
+		console.log("ATT: " + $(this).attr("data-id"));
+		var idArch = $(this).attr("data-id");
+
+		if (idArch != null) {
+			location.href = '/downloadFile?idArchivo=' + idArch;
+		}
+	});
+	
+	$('.nav-tabs li').first().addClass('active');
+	$('.tab-content div').first().addClass('active');
+	
+	$(".delete").click(function(e){
+		var dataid = $(this).siblings(".file-specs").attr("data-id");
+		var dataline =  $(this).parent();
+		 $.ajax({
+			  url: "/deleteFile",
+			  type: "POST",
+			  data: {idArchivo:dataid},
+			  success: function(e){
+				  if(e!=null){
+					  console.log(e);
+					dataline.addClass("hide"); //motivos visuales
+					$("#archivoE").append(e);
+					$("#deleteFile").modal();
+					
+				  }
+			  }
+		});
+	});
+	
+	// ]]>
+</script>
+</html>
